@@ -10,8 +10,14 @@ import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Confetti from 'react-dom-confetti';
+import { createCheckoutSession } from './action';
+import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 
 const DesignPreview = ({configuration}: {configuration: Configuration}) => {
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => setShowConfetti(true));
 
@@ -24,13 +30,27 @@ const DesignPreview = ({configuration}: {configuration: Configuration}) => {
   if(material === 'polycarbonate'){
     totalPrice += PRODUCT_PRICES.material.polycarbonate;
   }
-  if(finish === 'texture'){
+  if(finish === 'textured'){
     totalPrice += PRODUCT_PRICES.finish.textured;
   }
 
-  const {} = useMutation({
+  const {mutate: createPaymentSession} = useMutation({
     mutationKey: ["get-checkout-session"],
-    mutationFn: 
+    mutationFn: createCheckoutSession,
+    onSuccess: ({url}) => {
+      if(url){
+        router.push(url);
+      }else{
+        throw new Error("Unable to retrieve payment URL.")
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong!",
+        description: "There was an error on our end. Please try again.",
+        variant: "destructive",
+      })
+    }
   })
 
   return <>
@@ -85,7 +105,7 @@ const DesignPreview = ({configuration}: {configuration: Configuration}) => {
                   </p>
                 </div>
 
-                {finish === "texture" ? (
+                {finish === "textured" ? (
                   <div className='flex items-center justify-between py-1 mt-2'>
                     <p className='text-gray-600'>Textured finish</p>
                     <p className='font-medium text-gray-900'>
@@ -115,7 +135,10 @@ const DesignPreview = ({configuration}: {configuration: Configuration}) => {
             </div>
 
             <div className='mt-8 flex justify-end pb-12'>
-              <Button disabled={true} isLoading={true} loadingText='loading' className='px-4 sm:px-6 lg:px-8'>
+              <Button 
+                onClick={() => createPaymentSession({configId: configuration.id})}
+                className='px-4 sm:px-6 lg:px-8'
+              >
                 Check out
                 <ArrowRight className='h-4 w-4 ml-1.5 inline' />
               </Button>

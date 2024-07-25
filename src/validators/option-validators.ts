@@ -69,7 +69,7 @@ export const FINISHES = {
     },
     {
       label: "Textured Finish",
-      value: "texture",
+      value: "textured",
       description: "Soft grippy texture",
       price: PRODUCT_PRICES.finish.textured,
     },
